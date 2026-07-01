@@ -98,7 +98,7 @@ export default function App() {
         {/* PKT clock */}
         <div className="fixed bottom-20 left-0 right-0 z-30 flex justify-center pointer-events-none">
           <span className="text-[8px] font-black uppercase tracking-widest text-white/15">
-            {new Date().toLocaleTimeString('en-PK', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Karachi' })} PKT · {city.name}
+            {new Date().toLocaleTimeString('en-PK', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Karachi' })} · {city.name}
           </span>
         </div>
       </div>

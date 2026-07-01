@@ -203,12 +203,13 @@ export class AstronomyService {
               moonInterference: MoonPhase(opposition.date) > 120,
             });
           }
-          searchDate = new Date(searchDate.getTime() + 1000 * 60 * 60 * 24 * 200);
+          searchDate = new Date(opposition ? opposition.date.getTime() + 1000 * 60 * 60 * 24 * 30 : searchDate.getTime() + 1000 * 60 * 60 * 24 * 400);
         }
       } catch {}
     }
 
-    return events.sort((a, b) => a.date.getTime() - b.date.getTime());
+    const uniqueEvents = Array.from(new Map(events.map(e => [e.id, e])).values());
+    return uniqueEvents.sort((a, b) => a.date.getTime() - b.date.getTime());
   }
 
   getPointer(event: AstroEvent) {

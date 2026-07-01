@@ -6,17 +6,23 @@ import { AstroEvent } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { format } from 'date-fns';
+import { translations } from '../translations';
 
-const getDir = (az: number) => {
-  if (isNaN(az)) return 'North';
-  return ['North','Northeast','East','Southeast','South','Southwest','West','Northwest'][Math.round(az / 45) % 8];
+const getDir = (az: number, lang: 'en' | 'ur') => {
+  if (isNaN(az)) return lang === 'ur' ? 'شمال' : 'North';
+  const en = ['North','Northeast','East','Southeast','South','Southwest','West','Northwest'];
+  const ur = ['شمال','شمال مشرق','مشرق','جنوب مشرق','جنوب','جنوب مغرب','مغرب','شمال مغرب'];
+  const idx = Math.round(az / 45) % 8;
+  return lang === 'ur' ? ur[idx] : en[idx];
 };
+
 const getDirShort = (az: number) => {
   if (isNaN(az)) return 'N';
   return ['N','NE','E','SE','S','SW','W','NW'][Math.round(az / 45) % 8];
 };
 
-const LiveCompass: React.FC<{ azimuth: number; altitude: number }> = ({ azimuth, altitude }) => {
+const LiveCompass: React.FC<{ azimuth: number; altitude: number; lang: 'en' | 'ur' }> = ({ azimuth, altitude, lang }) => {
+  const t = translations[lang];
   const [heading, setHeading] = useState<number | null>(null);
   const [permissionDenied, setPermissionDenied] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
@@ -58,25 +64,22 @@ const LiveCompass: React.FC<{ azimuth: number; altitude: number }> = ({ azimuth,
     <div className="flex flex-col items-center gap-6">
       {isIOS && heading === null && !permissionDenied && (
         <button onClick={requestIOSPermission} className="px-5 py-2.5 bg-celestial-blue rounded-xl font-black uppercase tracking-widest text-xs">
-          Tap to Enable Compass
+          {t.enableCompass}
         </button>
       )}
       {permissionDenied && (
         <div className="flex items-center gap-2 text-red-400 text-xs font-black">
-          <AlertCircle size={12} /> Settings → Safari → Motion & Orientation
+          <AlertCircle size={12} /> {t.compassSettings}
         </div>
       )}
 
-      {/* Big compass */}
+      {/* Compass */}
       <div className="relative w-80 h-80">
-        {/* Outer glow */}
         <div className={`absolute inset-0 rounded-full transition-all duration-700 ${
           aligned
             ? 'shadow-[0_0_60px_rgba(74,222,128,0.4)] border-2 border-green-400'
             : 'shadow-[0_0_40px_rgba(56,103,214,0.2)] border-2 border-white/8'
         }`} />
-
-        {/* Background */}
         <div className="absolute inset-0 rounded-full" style={{
           background: 'radial-gradient(circle at center, rgba(56,103,214,0.08) 0%, rgba(0,0,0,0.4) 100%)',
         }} />
@@ -90,16 +93,10 @@ const LiveCompass: React.FC<{ azimuth: number; altitude: number }> = ({ azimuth,
           {['N','NE','E','SE','S','SW','W','NW'].map((label, i) => {
             const angle = i * 45;
             const rad = (angle - 90) * (Math.PI / 180);
-            const r = 130;
-            const cx = 160;
+            const r = 130; const cx = 160;
             return (
-              <div
-                key={label}
-                className={`absolute font-black -translate-x-1/2 -translate-y-1/2 ${
-                  label === 'N' ? 'text-red-400 text-base' : 'text-white/35 text-xs'
-                }`}
-                style={{ left: cx + r * Math.cos(rad), top: cx + r * Math.sin(rad) }}
-              >
+              <div key={label} className={`absolute font-black -translate-x-1/2 -translate-y-1/2 ${label === 'N' ? 'text-red-400 text-base' : 'text-white/35 text-xs'}`}
+                style={{ left: cx + r * Math.cos(rad), top: cx + r * Math.sin(rad) }}>
                 {label}
               </div>
             );
@@ -127,8 +124,7 @@ const LiveCompass: React.FC<{ azimuth: number; altitude: number }> = ({ azimuth,
         >
           <div className="relative flex flex-col items-center" style={{ height: 130 }}>
             <div className="w-0 h-0" style={{
-              borderLeft: '8px solid transparent',
-              borderRight: '8px solid transparent',
+              borderLeft: '8px solid transparent', borderRight: '8px solid transparent',
               borderBottom: '26px solid #60a5fa',
               filter: 'drop-shadow(0 0 10px rgba(96,165,250,0.9))',
             }} />
@@ -139,35 +135,31 @@ const LiveCompass: React.FC<{ azimuth: number; altitude: number }> = ({ azimuth,
           </div>
         </motion.div>
 
-        {/* Center */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="w-5 h-5 rounded-full bg-white shadow-[0_0_16px_rgba(255,255,255,0.7)]" />
         </div>
 
-        {/* Aligned message */}
         <AnimatePresence>
           {aligned && (
             <motion.div
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
+              initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
               className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-green-400 text-xs font-black uppercase tracking-widest whitespace-nowrap"
             >
-              ✓ Aligned! Look up {altitude}°
+              {t.aligned} {altitude}°
             </motion.div>
           )}
         </AnimatePresence>
       </div>
 
-      {/* Direction instruction */}
+      {/* Instructions */}
       <div className="text-center space-y-1">
-        <p className="text-white/30 text-xs uppercase tracking-widest font-black">Point your phone toward</p>
-        <p className="text-3xl font-black text-white">{getDir(safe)}</p>
+        <p className="text-white/30 text-xs uppercase tracking-widest font-black">{t.pointPhone}</p>
+        <p className="text-3xl font-black text-white">{getDir(safe, lang)}</p>
         <p className="text-white/40 text-sm">
-          Then look <span className="text-blue-400 font-bold">{isNaN(altitude) ? 0 : altitude}°</span> above the horizon
+          {t.lookAbove} <span className="text-blue-400 font-bold">{isNaN(altitude) ? 0 : altitude}°</span>
           {' · '}
           <span className="text-white/30">
-            {altitude < 20 ? 'near the ground' : altitude < 45 ? 'halfway up' : 'high up'}
+            {altitude < 20 ? t.nearGround : altitude < 45 ? t.halfwayUp : t.highUp}
           </span>
         </p>
       </div>
@@ -175,8 +167,8 @@ const LiveCompass: React.FC<{ azimuth: number; altitude: number }> = ({ azimuth,
       {/* Altitude bar */}
       <div className="w-full max-w-xs">
         <div className="flex justify-between text-[8px] font-black uppercase tracking-widest text-white/20 mb-1.5">
-          <span>Horizon</span>
-          <span>Overhead</span>
+          <span>{lang === 'ur' ? 'افق' : 'Horizon'}</span>
+          <span>{lang === 'ur' ? 'بالکل اوپر' : 'Overhead'}</span>
         </div>
         <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
           <motion.div
@@ -187,13 +179,13 @@ const LiveCompass: React.FC<{ azimuth: number; altitude: number }> = ({ azimuth,
           />
         </div>
         <p className="text-center text-white/40 text-xs mt-2 font-black">
-          {isNaN(altitude) ? 0 : altitude}° above the horizon
+          {isNaN(altitude) ? 0 : altitude}° {t.lookAbove}
         </p>
       </div>
 
       {heading === null && !isIOS && (
         <p className="text-white/20 text-[10px] uppercase tracking-widest font-black animate-pulse">
-          Slowly rotate your phone to calibrate...
+          {t.calibrating}
         </p>
       )}
     </div>
@@ -202,6 +194,7 @@ const LiveCompass: React.FC<{ azimuth: number; altitude: number }> = ({ azimuth,
 
 export const CanISeeIt: React.FC = () => {
   const { city, lang, selectedEvent } = useApp();
+  const t = translations[lang];
   const astro = useMemo(() => new AstronomyService(city), [city]);
   const [events, setEvents] = useState<AstroEvent[]>([]);
   const [selected, setSelected] = useState<AstroEvent | null>(selectedEvent);
@@ -237,7 +230,7 @@ export const CanISeeIt: React.FC = () => {
 
   if (loading) return (
     <div className="text-center py-20 text-celestial-blue font-black tracking-widest uppercase animate-pulse text-sm">
-      Loading sky data for {city.name}...
+      {t.loading} {city.name}...
     </div>
   );
 
@@ -247,16 +240,12 @@ export const CanISeeIt: React.FC = () => {
 
   return (
     <div className="space-y-6 pb-24">
-
-      {/* Page title */}
       <div className="pt-4 space-y-1">
         <h1 className="text-4xl md:text-5xl font-black uppercase tracking-tighter leading-none">
-          <span className="cosmic-text">Find It</span>{' '}
-          <span className="text-white/80">In The Sky</span>
+          <span className="cosmic-text">{lang === 'ur' ? 'آسمان میں' : 'Find It'}</span>{' '}
+          <span className="text-white/80">{lang === 'ur' ? 'ڈھونڈیں' : 'In The Sky'}</span>
         </h1>
-        <p className="text-white/30 text-sm">
-          Select an event — we'll tell you if it's visible and where to look
-        </p>
+        <p className="text-white/30 text-sm">{t.findSubtitle}</p>
       </div>
 
       {/* Event selector */}
@@ -279,14 +268,12 @@ export const CanISeeIt: React.FC = () => {
         ))}
       </div>
 
-      {/* Sky loading */}
       {skyLoading && (
         <div className="text-center py-8 text-celestial-blue/60 font-black text-xs uppercase tracking-widest animate-pulse">
-          Checking visibility for {city.name}...
+          {t.checkingVisibility} {city.name}...
         </div>
       )}
 
-      {/* Main result */}
       {selected && skyData && !skyLoading && (
         <motion.div
           key={selected.id}
@@ -296,7 +283,7 @@ export const CanISeeIt: React.FC = () => {
         >
           {/* Event hero */}
           <div className={`glass p-6 rounded-3xl border-l-4 ${isVisible ? 'border-l-green-500' : 'border-l-red-500'}`}>
-            <div className="flex items-start justify-between">
+            <div className="flex items-start justify-between gap-4">
               <div>
                 <h2 className="text-2xl font-black uppercase tracking-tight text-white">
                   {lang === 'ur' ? selected.nameUrdu : selected.name}
@@ -305,31 +292,38 @@ export const CanISeeIt: React.FC = () => {
                   {format(selected.date, 'MMMM dd, yyyy')} · {city.name}
                 </p>
               </div>
-              <div className={`flex items-center gap-2 px-4 py-2 rounded-xl font-black text-xs uppercase tracking-widest ${
-                isVisible ? 'bg-green-400/15 text-green-400 border border-green-400/30' : 'bg-red-400/15 text-red-400 border border-red-400/30'
+              <div className={`flex items-center gap-2 px-4 py-2 rounded-xl font-black text-xs uppercase tracking-widest shrink-0 ${
+                isVisible
+                  ? 'bg-green-400/15 text-green-400 border border-green-400/30'
+                  : 'bg-red-400/15 text-red-400 border border-red-400/30'
               }`}>
                 {isVisible ? <Eye size={14} /> : <EyeOff size={14} />}
-                {isVisible ? 'Visible' : 'Not Visible'}
+                {isVisible ? t.visible : t.notVisible}
               </div>
             </div>
           </div>
 
-          {/* Compass — center stage when visible */}
+          {/* Compass or not visible */}
           {isVisible ? (
             <div className="glass p-8 rounded-3xl flex flex-col items-center">
-              <p className="text-[10px] font-black uppercase tracking-widest text-white/25 mb-6">
-                Rotate your phone until the needle points straight up
+              <p className="text-[10px] font-black uppercase tracking-widest text-white/25 mb-6 text-center">
+                {t.rotatePhone}
               </p>
-              <LiveCompass azimuth={safeAz} altitude={safeAlt} />
+              <LiveCompass azimuth={safeAz} altitude={safeAlt} lang={lang} />
             </div>
           ) : (
             <div className="glass p-8 rounded-3xl text-center space-y-3">
               <EyeOff size={40} className="text-red-400/40 mx-auto" />
               <p className="text-white/50 text-sm leading-relaxed">
-                <strong className="text-white">{selected.name}</strong> is below the horizon from {city.name} tonight.
+                <strong className="text-white">{lang === 'ur' ? selected.nameUrdu : selected.name}</strong>
+                {' '}{t.belowHorizon} {city.name} {t.tonight}
               </p>
               <p className="text-white/30 text-sm">
-                Try switching to <span className="text-yellow-400">Quetta</span> or <span className="text-yellow-400">Islamabad</span> — they often have clearer skies and better viewing angles.
+                {t.tryCity}{' '}
+                <span className="text-yellow-400">{lang === 'ur' ? 'کوئٹہ' : 'Quetta'}</span>
+                {' '}{lang === 'ur' ? 'یا' : 'or'}{' '}
+                <span className="text-yellow-400">{lang === 'ur' ? 'اسلام آباد' : 'Islamabad'}</span>
+                {' '}{t.betterSky}
               </p>
             </div>
           )}

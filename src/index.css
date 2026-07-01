@@ -181,3 +181,33 @@
 
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Urdu font fixes */
+.rtl {
+  font-family: "Noto Nastaliq Urdu", serif;
+}
+
+.rtl h1, .rtl h2 {
+  line-height: 2;
+  font-size: 85%;
+}
+
+.rtl p, .rtl span, .rtl button {
+  line-height: 2.2;
+  font-size: 90%;
+}
+
+.rtl .text-\[8px\], .rtl .text-\[9px\], .rtl .text-\[10px\] {
+  font-size: 11px;
+  line-height: 2;
+}
+
+.rtl .badge {
+  line-height: 2;
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+.rtl .event-card {
+  min-height: auto;
+}
